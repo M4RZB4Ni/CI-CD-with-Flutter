@@ -1,0 +1,45 @@
+# this file is only configured for iOS version and the Android version will add soon.
+
+version: 2.1
+
+# CircleCI orbs are using for access the Flutter and Its configurations automatically
+orbs:
+  flutter: circleci/flutter@1.1.0
+
+jobs:
+  distribute:
+    macos:
+      xcode: 13.2.1
+    environment:
+#      Store MATCH_PASSWORD, APPLE_ID, FASTLANE_PASSWORD
+#      in your CircleCI dashboard after the Fastlane asked them from you in the terminal
+      MATCH_PASSWORD: MATCH_PASSWORD
+      APPLE_ID: APPLE_ID
+      FASTLANE_PASSWORD: FASTLANE_PASSWORD
+    steps:
+      - checkout
+      - flutter/install_sdk_and_pub:
+          flutter_version: "3.7.0"
+      - flutter/install_ios_pod
+      - flutter/install_ios_gem
+      - run:
+          name: Install dependencies
+          command: gem install fastlane   
+      - checkout:
+          name: Get Profiles
+          path: the URL of repository that you gave to FASTLANE to store Apple Certificates
+      - run:
+          name: Retrieve certificates and profiles from match
+          command: fastlane match appstore --readonly
+      - run:
+          name: Upload to TestFlight
+          command: bundle exec fastlane beta
+# this workflow tells CircleCI if only master branch gets an update you can execute above commands
+workflows:
+  distribute:
+    jobs:
+      - distribute:
+         filters:
+           branches:
+             only:
+               - /^master$/
